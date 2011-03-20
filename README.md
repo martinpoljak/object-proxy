@@ -3,11 +3,11 @@ Object Proxy
 
 **object-proxy** provides proxy objects intended for intercepting calls 
 to instance methods. Works as intermediate layer between caller and 
-called. Allows to invoke handler both before method call and adjust its 
-arguments and after call and post-proccess result. Aimed as tool for 
-instant adapting the complex objects without complete deriving and 
+called. Allows to invoke an handler both before method call and adjust 
+its  arguments and after call and post-proccess result. Aimed as tool 
+for instant adapting the complex objects without complete deriving and 
 extending whole classes in cases, where isn't possible to derive them 
-as homogenic functional unit or where it's simply impractical to 
+as homogenic functional units or where it's simply impractical to 
 derive them.
 
 See some slightly stupid example:
