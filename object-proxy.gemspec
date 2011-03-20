@@ -18,18 +18,20 @@ Gem::Specification.new do |s|
   s.files = [
     ".document",
     "Gemfile",
+    "Gemfile.lock",
     "LICENSE.txt",
     "README.md",
     "Rakefile",
     "VERSION",
     "lib/object-proxy.rb",
+    "object-proxy.gemspec",
     "test"
   ]
   s.homepage = %q{http://github.com/martinkozak/object-proxy}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.6.2}
-  s.summary = %q{Provides proxy objects intended for intercepting calls to instance methods. Works as intermediate layer between caller and called. Allows to invoke handler both before method call and adjust its arguments and after call and post-proccess result. Aimed as tool for instant adapting the complex objects without complete deriving and extending whole classes in cases, where isn't possible to derive them as homogenic functional unit or where it's simply impractical to derive them.}
+  s.summary = %q{Provides proxy objects intended for intercepting calls to instance methods. Works as intermediate layer between caller and called. Allows to invoke an handler both before method call and adjust its arguments and after call and post-proccess result. Aimed as tool for instant adapting the complex objects without complete deriving and extending whole classes in cases, where isn't possible to derive them as homogenic functional units or where it's simply impractical to derive them.}
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
