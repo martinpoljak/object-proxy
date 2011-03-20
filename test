@@ -1,0 +1,24 @@
+#!/usr/bin/ruby
+# encoding: utf-8
+# (c) 2011 Martin Kozák (martinkozak@martinkozak.net)
+
+$:.push("./lib")
+require "object-proxy"
+require "riot"
+
+context "ObjectProxy" do
+    asserts("proxying") do 
+        s = OP["a,b,c,d"]
+
+        s.register_handler(:"before_<<") do |args|
+            args = [",A,B,C"]
+            args
+        end
+
+        s.register_handler(:"after_<<") do |result|
+            "alfa beta"
+        end
+
+        (s << ",1,2,3" == "alfa beta") and (s == "a,b,c,d,A,B,C")
+    end
+end
