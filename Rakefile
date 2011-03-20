@@ -16,7 +16,7 @@ Jeweler::Tasks.new do |gem|
   gem.name = "object-proxy"
   gem.homepage = "http://github.com/martinkozak/object-proxy"
   gem.license = "MIT"
-  gem.summary = "Provides proxy objects intended for intercepting calls to instance methods. Works as intermediate layer between caller and called. Allows to invoke handler both before method call and adjust its arguments and after call and post-proccess result. Aimed as tool for instant adapting the complex objects without complete deriving and extending whole classes in cases, where isn\'t possible to derive them as homogenic functional unit or where it's simply impractical to derive them."
+  gem.summary = "Provides proxy objects intended for intercepting calls to instance methods. Works as intermediate layer between caller and called. Allows to invoke an handler both before method call and adjust its arguments and after call and post-proccess result. Aimed as tool for instant adapting the complex objects without complete deriving and extending whole classes in cases, where isn\'t possible to derive them as homogenic functional units or where it's simply impractical to derive them."
   gem.email = "martinkozak@martinkozak.net"
   gem.authors = ["Martin Kozák"]
   # Include your dependencies below. Runtime dependencies are required when using your gem,
