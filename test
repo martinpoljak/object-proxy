@@ -7,7 +7,7 @@ require "object-proxy"
 require "riot"
 
 context "ObjectProxy" do
-    asserts("proxying") do 
+    asserts("#create") do 
         s = OP["a,b,c,d"]
 
         s.register_handler(:"before_<<") do |args|
@@ -20,5 +20,27 @@ context "ObjectProxy" do
         end
 
         (s << ",1,2,3" == "alfa beta") and (s == "a,b,c,d,A,B,C")
+    end
+    asserts("#fake") do
+        pr = OP::fake(String) do
+            define_method :to_s do 
+                "alfa beta"
+            end
+        end
+
+        (pr.to_s == "alfa beta") and pr.inspect.nil?
+    end
+    asserts("#track") do
+        log = [ ]
+        s = OP::track("a,b,c,d")
+        s.before_call do |name|
+            log << name
+        end
+        s.after_call do |name|
+            log << name
+        end
+        s.gsub!(",", "")
+        
+        (log == [:gsub!, :gsub!]) and (s == "abcd")
     end
 end
