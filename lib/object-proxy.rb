@@ -127,8 +127,8 @@ module ObjectProxy
     end
     
     ##
-    # Creates tracker object. Works by similar way as standard proxy
-    # objects, but rather than invoking in'dividual handlers for each 
+    # Creates "tracker object". Works by similar way as standard proxy
+    # objects, but rather than invoking individual handlers for each 
     # method call invokes single handler before and single after call
     # which receives except arguments or result the method name.
     #
