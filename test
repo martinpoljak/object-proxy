@@ -27,7 +27,8 @@ context "ObjectProxy" do
                 "alfa beta"
             end
         end
-
+        
+        pr = pr::new
         (pr.to_s == "alfa beta") and pr.inspect.nil?
     end
     asserts("#track") do

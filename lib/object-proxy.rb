@@ -59,7 +59,7 @@ module ObjectProxy
             # Event handlers assigning interceptor
             define_method :method_missing do |name, *args, &block|
                 if name.start_with? "before_", "after_"
-                    self.register_handler(name, block)
+                    self.register_handler(name, &block)
                 end
             end
             
@@ -123,7 +123,7 @@ module ObjectProxy
             cls.instance_eval(&block)
         end
         
-        return cls::new
+        return cls
     end
     
     ##
