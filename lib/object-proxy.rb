@@ -106,13 +106,15 @@ module ObjectProxy
     # @since 0.2.0
     #
     
-    def self.fake(cls, &block)
+    def self.fake(cls, omit = [ ], &block)
         cls = Class::new(cls)
         cls.instance_eval do
+            omit.concat([:object_id, :__send__])
+            
             # Eviscerates instances methods and replace them by
             #   before and after handlers invoker
             public_instance_methods.each do |method|
-                if not method.in? [:object_id, :__send__]
+                if not method.in? omit
                     alias_method method.prepend("native_"), method
                     define_method method do |*args, &block| end
                 end
@@ -187,52 +189,58 @@ module ObjectProxy
         
         return cls::new(object)
     end
+
+    ##
+    # Creates "catching object". It means, it catches all method calls
+    # and forwards them to +#method_call+ handler which calls wrapped object
+    # by default, but can be overriden, so calls can be controlled.
+    #
+    # @param [Object] object proxied object 
+    # @return [Class] anonymous proxy class
+    # @since 0.2.0
+    #
+
+    def self.catch(object)
+        cls = Class::new(object.class)
+        cls.instance_eval do
+          
+            # Eviscerates instances methods and replace them by 
+            # +#handle_call+ invoker
+            
+            public_instance_methods.each do |method|
+                if not method.in? [:object_id, :__send__]
+                    define_method method do |*args, &block|
+                        @method_call.call(method, args, block)
+                    end
+                end
+            end
+            
+            # Adds constructor
+            
+            define_method :initialize do |wrapped|
+                @wrapped = wrapped
+                @method_call = Proc::new do |method, args, block|
+                    @wrapped.send(method, *args, &block)
+                end
+            end
+            
+            # Defines handler assigner
+            
+            define_method :method_call do |&block|
+                @method_call = block
+            end
+            
+            # Adds wrapped accessor
+
+            define_method :wrapped do
+                @wrapped
+            end
+                        
+        end
+        
+        return cls::new(object)
+    end    
 end
 
-##
-# Shortcut module to [ObjectProxy].
-#
-    
-module OP
+OP = ObjectProxy
 
-    ##
-    # Alias for +ObjectProxy#create+.
-    # @see ObjectProxy
-    # @since 0.1.0
-    #
-    
-    def self.[](object)
-        ObjectProxy::proxy(object)
-    end
-
-    ##
-    # Alias for +ObjectProxy#create+.
-    # @see ObjectProxy
-    # @since 0.2.0
-    #
-    
-    def self.proxy(object)
-        ObjectProxy::proxy(object)
-    end
-
-    ##
-    # Alias for +ObjectProxy#fake+.
-    # @see ObjectProxy
-    # @since 0.2.0
-    #
-    
-    def self.fake(cls, &block)
-        ObjectProxy::fake(cls, &block)
-    end
-    
-    ##
-    # Alias for +ObjectProxy#track+.
-    # @see ObjectProxy
-    # @since 0.2.0
-    #
-    
-    def self.track(obj)
-        ObjectProxy::track(obj)
-    end
-    
-end

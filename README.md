@@ -5,7 +5,7 @@ Object Proxy
 to instance methods. It's aimed as tool for instant adapting the complex 
 objects without complete deriving and extending whole classes in cases, 
 where isn't possible to derive them as homogenic functional units or 
-where it's simply impractical to derive them. Provides three 
+where it's simply impractical to derive them. Provides four base 
 proxy types.
 
 ### Standard Proxy
@@ -39,7 +39,9 @@ to nothing.
 
 See some slightly stupid example:
 
-        pr = OP::fake(String) do
+        pr = OP::fake(String, [:kind_of?]) do   # we will use #kind_of? below, 
+                                                #   so we need say, we don't want to reset it
+                                                
             define_method :to_s do  # let's say, '#to_s' will return
                 "alfa beta"         #   fixed value
             end
@@ -74,6 +76,28 @@ See some slightly stupid example:
         p calls
         
 Will print out `[:<<, :gsub!, :split]`.
+
+### Catching Proxy
+Catches all method calls and forwards them to the `#method_call` handler which 
+calls wrapped object by default, but can be overriden, so calls can be 
+fully controlled.
+
+See some slightly stupid example:
+
+        s = OP::catch("foo")
+        
+        s.method_call do |name, args, block|
+            if name == :to_s
+                s.wrapped.send(name, *args, &block)
+            else
+                :nothing
+            end
+        end
+        
+        p s.replace("beta")   # will print ":nothing" out
+        s.to_s                # will print "foo" out
+        
+But object still seems to be `String`.
 
         
 Contributing
