@@ -76,6 +76,8 @@ module ObjectProxy
     
     ##
     # Alias for +ObjectProxy::proxy+.
+    #
+    # @return [Class]
     # @since 0.2.0
     #
     
@@ -85,6 +87,8 @@ module ObjectProxy
         
     ##
     # Alias for +ObjectProxy::proxy+.
+    #
+    # @return [Class]
     # @since 0.1.0
     #
     
@@ -241,6 +245,10 @@ module ObjectProxy
         return cls::new(object)
     end    
 end
+
+##
+# Alias for {ObjectProxy}.
+#
 
 OP = ObjectProxy
 
