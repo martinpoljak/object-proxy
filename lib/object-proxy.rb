@@ -205,7 +205,14 @@ module ObjectProxy
     #
 
     def self.catch(object)
-        cls = Class::new(object.class)
+      
+        # Takes class object
+        _class = object
+        if not _class.kind_of? Class
+            _class = object.class
+        end
+        
+        cls = Class::new(_class)
         cls.instance_eval do
           
             # Eviscerates instances methods and replace them by 
@@ -221,11 +228,20 @@ module ObjectProxy
             
             # Adds constructor
             
-            define_method :initialize do |wrapped|
-                @wrapped = wrapped
-                @method_call = Proc::new do |method, args, block|
-                    @wrapped.send(method, *args, &block)
+            if not object.kind_of? Class
+                define_method :initialize do
+                    @wrapped = object
+                    @method_call = Proc::new do |method, args, block|
+                        @wrapped.send(method, *args, &block)
+                    end
                 end
+            else
+                define_method :initialize do |*args, &block|
+                    @wrapped = _class::new(*args, &block)
+                    @method_call = Proc::new do |method, args, block|
+                        @wrapped.send(method, *args, &block)
+                    end
+                end                
             end
             
             # Defines handler assigner
@@ -242,7 +258,13 @@ module ObjectProxy
                         
         end
         
-        return cls::new(object)
+        if object.kind_of? Class
+            result = cls
+        else
+            result = cls::new
+        end
+        
+        return result
     end    
 end
 

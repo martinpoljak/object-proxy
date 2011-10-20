@@ -45,7 +45,7 @@ context "ObjectProxy" do
         (log == [:gsub!, :gsub!]) and (s == "abcd")
     end
     asserts("#catch") do
-        s = OP::catch("alfa")
+        s = OP::catch(String)::new("alfa")
         log = [ ]
         
         s.method_call do |name, args, block|
