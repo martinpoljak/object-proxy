@@ -6,9 +6,55 @@ $:.push("./lib")
 require "object-proxy"
 require "riot"
 
-context "ObjectProxy" do
+context "ObjectProxy (instances)" do
     asserts("#create") do 
         s = OP["a,b,c,d"]
+
+        s.register_handler(:"before_<<") do |args|
+            args = [",A,B,C"]
+            args
+        end
+
+        s.register_handler(:"after_<<") do |result|
+            "alfa beta"
+        end
+
+        (s << ",1,2,3" == "alfa beta") and (s == "a,b,c,d,A,B,C")
+    end
+    asserts("#track") do
+        log = [ ]
+        s = OP::track("a,b,c,d")
+        s.before_call do |name|
+            log << name
+        end
+        s.after_call do |name|
+            log << name
+        end
+        s.gsub!(",", "")
+        
+        (log == [:gsub!, :gsub!]) and (s == "abcd")
+    end
+    asserts("#catch") do
+        s = OP::catch("alfa")
+        log = [ ]
+        
+        s.method_call do |name, args, block|
+            if name == :to_s
+                log << name
+                s.wrapped.send(name, *args, &block)
+            end
+        end
+        
+        s.replace("beta")
+        s.to_s
+        
+        (log == [:to_s]) and (s.to_s == "alfa")
+    end
+end
+
+context "ObjectProxy (classes)" do
+    asserts("#create") do 
+        s = ObjectProxy::proxy(String)::new("a,b,c,d")
 
         s.register_handler(:"before_<<") do |args|
             args = [",A,B,C"]
@@ -33,7 +79,7 @@ context "ObjectProxy" do
     end
     asserts("#track") do
         log = [ ]
-        s = OP::track("a,b,c,d")
+        s = OP::track(String)::new("a,b,c,d")
         s.before_call do |name|
             log << name
         end

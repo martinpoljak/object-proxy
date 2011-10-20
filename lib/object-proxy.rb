@@ -14,14 +14,22 @@ module ObjectProxy
     # Creates proxy object. "Proxy object" means, it calls handler
     # if defined before and after each method call.
     #
-    # @param [Object] object proxied object 
-    # @return [Class] anonymous proxy class with before and after 
+    # @param [Object, Class] object proxied object or class 
+    # @return [Object, Class] anonymous proxy instance or class with before and after 
     #   handlers functionality
     # @since 0.2.0
     #
 
     def self.proxy(object)
-        cls = Class::new(object.class)
+
+
+        # Takes class object
+        _class = object
+        if not _class.kind_of? Class
+            _class = object.class
+        end
+        
+        cls = Class::new(_class)
         cls.instance_eval do
         
             # Eviscerates instances methods and replace them by
@@ -38,7 +46,7 @@ module ObjectProxy
                         end
                         
                         # call
-                        result = @wrapped.send(method, *args, &block)
+                        result = object.send(method, *args, &block)
                         
                         # after handler
                         if @handlers.include? after
@@ -51,9 +59,15 @@ module ObjectProxy
             end
             
             # Adds constructor
-            define_method :initialize do |wrapped|
-                @wrapped = wrapped
-                @handlers = { }
+            if not object.kind_of? Class
+                define_method :initialize do
+                    @handlers = { }
+                end
+            else
+                define_method :initialize do |*args, &block|
+                    object = _class::new(*args, &block)
+                    @handlers = { }
+                end                
             end
             
             # Event handlers assigning interceptor
@@ -71,13 +85,20 @@ module ObjectProxy
             attr_accessor :wrapped
         end
         
-        return cls::new(object)
+        if object.kind_of? Class
+            result = cls
+        else
+            result = cls::new
+        end
+        
+        return result
     end
     
     ##
     # Alias for +ObjectProxy::proxy+.
     #
-    # @return [Class]
+    # @param [Object, Class] object
+    # @return [Object, Class]
     # @since 0.2.0
     #
     
@@ -88,7 +109,8 @@ module ObjectProxy
     ##
     # Alias for +ObjectProxy::proxy+.
     #
-    # @return [Class]
+    # @param [Object, Class] object
+    # @return [Object, Class]
     # @since 0.1.0
     #
     
@@ -140,14 +162,21 @@ module ObjectProxy
     #
     # Also doesn't support customizing the arguments or result.
     #
-    # @param [Object] object proxied object 
-    # @return [Class] anonymous proxy class with before and after 
+    # @param [Object, Class] object proxied object or class 
+    # @return [Object, Class] anonymous proxy instance or class with before and after 
     #   handlers functionality
     # @since 0.2.0
     #
     
     def self.track(object)
-        cls = Class::new(object.class)
+      
+        # Takes class object
+        _class = object
+        if not _class.kind_of? Class
+            _class = object.class
+        end
+        
+        cls = Class::new(_class)
         cls.instance_eval do
         
             # Eviscerates instances methods and replace them by 
@@ -160,7 +189,7 @@ module ObjectProxy
                             @before_call.call(method, args, block)
                         end
                         
-                        result = @wrapped.send(method, *args, &block)
+                        result = object.send(method, *args, &block)
                         
                         if not @after_call.nil?
                             @after_call.call(method, result)
@@ -170,13 +199,20 @@ module ObjectProxy
                     end
                 end
             end
-            
+
             # Adds constructor
             
-            define_method :initialize do |wrapped|
-                @wrapped = wrapped
-                @before_call = nil
-                @after_call = nil
+            if not object.kind_of? Class
+                define_method :initialize do
+                    @before_call = nil
+                    @after_call = nil
+                end
+            else
+                define_method :initialize do |*args, &block|
+                    object = _class::new(*args, &block)
+                    @before_call = nil
+                    @after_call = nil
+                end                
             end
             
             # Defines handler assigners
@@ -191,7 +227,13 @@ module ObjectProxy
             
         end
         
-        return cls::new(object)
+        if object.kind_of? Class
+            result = cls
+        else
+            result = cls::new
+        end
+        
+        return result
     end
 
     ##
@@ -199,8 +241,8 @@ module ObjectProxy
     # and forwards them to +#method_call+ handler which calls wrapped object
     # by default, but can be overriden, so calls can be controlled.
     #
-    # @param [Object] object proxied object 
-    # @return [Class] anonymous proxy class
+    # @param [Object, Class] object proxied object or class 
+    # @return [Object, Class] anonymous proxy instance or class
     # @since 0.2.0
     #
 
@@ -230,16 +272,15 @@ module ObjectProxy
             
             if not object.kind_of? Class
                 define_method :initialize do
-                    @wrapped = object
                     @method_call = Proc::new do |method, args, block|
-                        @wrapped.send(method, *args, &block)
+                        object.send(method, *args, &block)
                     end
                 end
             else
                 define_method :initialize do |*args, &block|
-                    @wrapped = _class::new(*args, &block)
+                    object = _class::new(*args, &block)
                     @method_call = Proc::new do |method, args, block|
-                        @wrapped.send(method, *args, &block)
+                        object.send(method, *args, &block)
                     end
                 end                
             end
@@ -253,7 +294,7 @@ module ObjectProxy
             # Adds wrapped accessor
 
             define_method :wrapped do
-                @wrapped
+                object
             end
                         
         end
