@@ -241,12 +241,13 @@ module ObjectProxy
     # and forwards them to +#method_call+ handler which calls wrapped object
     # by default, but can be overriden, so calls can be controlled.
     #
-    # @param [Object, Class] object proxied object or class 
+    # @param [Object, Class] object proxied object or class
+    # @param [Proc] block  default +#method_call+ handler for whole class 
     # @return [Object, Class] anonymous proxy instance or class
     # @since 0.2.0
     #
 
-    def self.catch(object)
+    def self.catch(object, &block)
       
         # Takes class object
         _class = object
@@ -261,7 +262,7 @@ module ObjectProxy
             # +#handle_call+ invoker
             
             public_instance_methods.each do |method|
-                if not method.in? [:object_id, :__send__]
+                if not method.in? [:object_id, :__send__, :class]
                     define_method method do |*args, &block|
                         @method_call.call(method, args, block)
                     end
@@ -272,8 +273,12 @@ module ObjectProxy
             
             if not object.kind_of? Class
                 define_method :initialize do
-                    @method_call = Proc::new do |method, args, block|
-                        object.send(method, *args, &block)
+                    @method_call = block
+                    
+                    if block.nil?
+                        @method_call = Proc::new do |method, args, block|
+                            object.send(method, *args, &block)
+                        end
                     end
                 end
             else
