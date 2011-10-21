@@ -21,13 +21,19 @@ module ObjectProxy
     #
 
     def self.proxy(object)
+        
+        ### Initializes local context
+  
+        __handlers = { }
 
-
-        # Takes class object
+        ### Takes class object
+        
         _class = object
         if not _class.kind_of? Class
             _class = object.class
         end
+        
+        ### Defines class
         
         cls = Class::new(_class)
         cls.instance_eval do
@@ -41,16 +47,16 @@ module ObjectProxy
                         after = method.prepend("after_")
                         
                         # before handler
-                        if @handlers.include? before
-                            args, block = @handlers[before].call(args, block)
+                        if __handlers.include? before
+                            args, block = __handlers[before].call(args, block)
                         end
                         
                         # call
                         result = object.send(method, *args, &block)
                         
                         # after handler
-                        if @handlers.include? after
-                            result = @handlers[after].call(result)
+                        if __handlers.include? after
+                            result = __handlers[after].call(result)
                         end
                         
                         return result
@@ -59,14 +65,9 @@ module ObjectProxy
             end
             
             # Adds constructor
-            if not object.kind_of? Class
-                define_method :initialize do
-                    @handlers = { }
-                end
-            else
+            if object.kind_of? Class
                 define_method :initialize do |*args, &block|
                     object = _class::new(*args, &block)
-                    @handlers = { }
                 end                
             end
             
@@ -79,7 +80,7 @@ module ObjectProxy
             
             # Assigns event handler
             define_method :register_handler do |name, &block|
-                @handlers[name] = block
+                __handlers[name] = block
             end
             
             attr_accessor :wrapped
@@ -169,12 +170,20 @@ module ObjectProxy
     #
     
     def self.track(object)
-      
-        # Takes class object
+        
+        ### Initializes local context
+        
+        __before_call = nil
+        __after_call = nil
+        
+        ### Takes class object
+        
         _class = object
         if not _class.kind_of? Class
             _class = object.class
         end
+        
+        ### Defines class
         
         cls = Class::new(_class)
         cls.instance_eval do
@@ -185,14 +194,14 @@ module ObjectProxy
             public_instance_methods.each do |method|
                 if not method.in? [:object_id, :__send__]
                     define_method method do |*args, &block| 
-                        if not @before_call.nil?
-                            @before_call.call(method, args, block)
+                        if not __before_call.nil?
+                            __before_call.call(method, args, block)
                         end
                         
                         result = object.send(method, *args, &block)
                         
-                        if not @after_call.nil?
-                            @after_call.call(method, result)
+                        if not __after_call.nil?
+                            __after_call.call(method, result)
                         end
                         
                         return result
@@ -202,27 +211,20 @@ module ObjectProxy
 
             # Adds constructor
             
-            if not object.kind_of? Class
-                define_method :initialize do
-                    @before_call = nil
-                    @after_call = nil
-                end
-            else
+            if object.kind_of? Class
                 define_method :initialize do |*args, &block|
                     object = _class::new(*args, &block)
-                    @before_call = nil
-                    @after_call = nil
                 end                
             end
             
             # Defines handler assigners
             
             define_method :before_call do |&block|
-                @before_call = block
+                __before_call = block
             end
             
             define_method :after_call do |&block|
-                @after_call = block
+                __after_call = block
             end
             
         end
@@ -248,52 +250,64 @@ module ObjectProxy
     #
 
     def self.catch(object, &block)
-      
-        # Takes class object
+        
+        ### Initializes local context
+        
+        __method_call = nil
+        
+        ### Takes class object
+        
         _class = object
         if not _class.kind_of? Class
             _class = object.class
         end
         
+        ### Defines class
+        
         cls = Class::new(_class)
         cls.instance_eval do
-          
+
             # Eviscerates instances methods and replace them by 
             # +#handle_call+ invoker
             
             public_instance_methods.each do |method|
                 if not method.in? [:object_id, :__send__, :class]
                     define_method method do |*args, &block|
-                        @method_call.call(method, args, block)
+                        __method_call.call(method, args, block)
                     end
                 end
             end
             
             # Adds constructor
-            
+
             if not object.kind_of? Class
                 define_method :initialize do
-                    @method_call = block
-                    
+                    __method_call = block
                     if block.nil?
-                        @method_call = Proc::new do |method, args, block|
-                            object.send(method, *args, &block)
-                        end
+                        __method_call = cls.class_variable_get(:@@default_handler)
                     end
                 end
             else
                 define_method :initialize do |*args, &block|
                     object = _class::new(*args, &block)
-                    @method_call = Proc::new do |method, args, block|
-                        object.send(method, *args, &block)
-                    end
+                    __method_call = cls.class_variable_get(:@@default_handler)
                 end                
             end
             
-            # Defines handler assigner
+            # Defines handler assigner and the default handler
+
+            default_handler = Proc::new do |method, args, block|
+                object.send(method, *args, &block)
+            end
+            
+            class_variable_set(:@@default_handler, default_handler)
+            
+            define_singleton_method :method_call do |&block| 
+                cls.class_variable_set(:@@default_handler, block)
+            end
             
             define_method :method_call do |&block|
-                @method_call = block
+                __method_call = block
             end
             
             # Adds wrapped accessor
@@ -301,7 +315,7 @@ module ObjectProxy
             define_method :wrapped do
                 object
             end
-                        
+            
         end
         
         if object.kind_of? Class
