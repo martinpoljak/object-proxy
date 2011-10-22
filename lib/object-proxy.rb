@@ -281,9 +281,9 @@ module ObjectProxy
             # Adds constructor
 
             if not object.kind_of? Class
-                define_method :initialize do
+                define_method :initialize do |&block|
                     __method_call = block
-                    if block.nil?
+                    if __method_call.nil?
                         __method_call = cls.class_variable_get(:@@default_handler)
                     end
                 end
@@ -291,6 +291,11 @@ module ObjectProxy
                 define_method :initialize do |*args, &block|
                     object = _class::new(*args, &block)
                     __method_call = cls.class_variable_get(:@@default_handler)
+                    
+                    ic = cls.class_variable_get(:@@instance_created)
+                    if not ic.nil?
+                        ic.call(self)
+                    end
                 end                
             end
             
@@ -301,15 +306,23 @@ module ObjectProxy
             end
             
             class_variable_set(:@@default_handler, default_handler)
-            
             define_singleton_method :method_call do |&block| 
                 cls.class_variable_set(:@@default_handler, block)
+            end
+            
+            class_variable_set(:@@instance_created, nil)
+            define_singleton_method :instance_created do |&block| 
+                cls.class_variable_set(:@@instance_created, block)
             end
             
             define_method :method_call do |&block|
                 __method_call = block
             end
-            
+
+            define_method :method_call do |&block|
+                __method_call = block
+            end
+                        
             # Adds wrapped accessor
 
             define_method :wrapped do
