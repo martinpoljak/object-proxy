@@ -8,6 +8,11 @@ where isn't possible to derive them as homogenic functional units or
 where it's simply impractical to derive them. Provides four base 
 proxy types.
 
+*In all examples, object instance proxying is used, but both class objects
+and object instances proxying are supported. Simply give object instance
+instead of class object to the constructor. Wrapped object instance will 
+be returned.*
+
 ### Standard Proxy
 Works as intermediate layer between caller and called. Allows to invoke 
 an handler both before method call and adjust its  arguments and after 
