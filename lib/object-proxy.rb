@@ -192,7 +192,7 @@ module ObjectProxy
             # +#on_method+ invoker
             
             public_instance_methods.each do |method|
-                if not method.in? [:object_id, :__send__, :class, :instance_variable_set, :instance_variable_get]
+                if not method.in? [:object_id, :__send__, :class]
                     define_method method do |*args, &block| 
                         if not @before_call.nil?
                             @before_call.call(method, args, block)
@@ -233,14 +233,8 @@ module ObjectProxy
             
             # Wrapped accessor
             
-            define_method :wrapped do
-                self.instance_variable_get(:@wrapped)
-            end
-            
-            define_method :wrapped= do |value|
-                self.instance_variable_set(:@wrapped, value)
-            end
-                        
+            attr_accessor :wrapped
+                                    
         end
         
         if object.kind_of? Class
