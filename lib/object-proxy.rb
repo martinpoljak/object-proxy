@@ -186,13 +186,13 @@ module ObjectProxy
         ### Defines class
         
         cls = Class::new(_class)
-        cls.instance_eval do
+        cls.class_eval do
         
             # Eviscerates instances methods and replace them by 
             # +#on_method+ invoker
             
             public_instance_methods.each do |method|
-                if not method.in? [:object_id, :__send__]
+                if not method.in? [:object_id, :__send__, :class, :instance_variable_set, :instance_variable_get]
                     define_method method do |*args, &block| 
                         if not @before_call.nil?
                             @before_call.call(method, args, block)
@@ -281,34 +281,34 @@ module ObjectProxy
             # +#handle_call+ invoker
             
             public_instance_methods.each do |method|
-                if not method.in? [:object_id, :__send__, :class, :instance_variable_set, :instance_variable_get]
+                if not method.in? [:object_id, :__send__, :class]
                     define_method method do |*args, &block|
-                        self.method_call.call(method, args, block)
+                        @method_call.call(method, args, block)
                     end
                 end
             end
             
             # Adds constructor
-            
+
             if not object.kind_of? Class
                 define_method :initialize do |&block|
-                    self.wrapped = object
+                    @wrapped = object
                     
                     if not block.nil?
-                       self.method_call = block 
+                       @method_call = block 
                     else
-                       self.method_call = cls.class_variable_get(:@@method_call)
+                       @method_call = cls.class_variable_get(:@@method_call)
                     end
                     
-                    if self.method_call.nil?
-                        self.method_call = Proc::new do |method, args, block|
-                            self.wrapped.send(method, *args, &block)
+                    if @method_call.nil?
+                        @method_call = Proc::new do |method, args, block|
+                            @wrapped.send(method, *args, &block)
                         end
                     end
                 end
             else
                 define_method :initialize do |*args, &block|
-                    self.wrapped = _class::new(*args, &block)
+                    @wrapped = _class::new(*args, &block)
                     
                     ic = cls.class_variable_get(:@@instance_created)
                     if not ic.nil?
@@ -329,25 +329,18 @@ module ObjectProxy
                 cls.class_variable_set(:@@instance_created, block)
             end
             
-            # Sets up accessors and default handler
-            
-            define_method :wrapped do
-                self.instance_variable_get(:@wrapped)
-            end
-            
-            define_method :wrapped= do |value|
-                self.instance_variable_set(:@wrapped, value)
-            end
+            # Sets up accessors and default handler            
+            attr_accessor :wrapped
 
             define_method :method_call do |&block|
                 if not block.nil?   # set
-                    self.method_call = block
+                    @method_call = block
                 else                # get
-                    result = self.instance_variable_get(:@method_call)
+                    result = @method_call
                     
                     if result.nil?
                         result = Proc::new do |method, args, block|
-                            self.wrapped.send(method, *args, &block)
+                            @wrapped.send(method, *args, &block)
                         end
                     end                    
                     
@@ -355,9 +348,7 @@ module ObjectProxy
                 end
             end
             
-            define_method :method_call= do |value|
-                self.instance_variable_set(:@method_call, value)
-            end
+            attr_writer :method_call
                         
         end
         
