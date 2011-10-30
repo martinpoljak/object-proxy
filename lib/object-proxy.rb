@@ -277,7 +277,7 @@ module ObjectProxy
             public_instance_methods.each do |method|
                 if not method.in? [:object_id, :__send__, :class]
                     define_method method do |*args, &block|
-                        @method_call.call(method, args, block)
+                        self.method_call.call(method, args, block)
                     end
                 end
             end
